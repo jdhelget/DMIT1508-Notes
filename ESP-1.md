@@ -34,7 +34,7 @@ After performing Third-Normal Form, another new table was generated: **Customer*
 
 **Customer:** (<b class="pk">CustomerNumber</b>, FirstName, LastName, Address, City, Province, PostalCode, Phone)
 
-### Tables after 3sup>rd</sup> Normal Form
+### Tables after 3<sup>rd</sup> Normal Form
 
 These are the tables/entities after normalizing the Customer Details View. 
 
