@@ -46,6 +46,9 @@ These are the tables/entities after normalizing the Customer Details View.
 
 **Customer** (<b class="pk">CustomerNumber</b>, FirstName, LastName, Address, City, Province, PostalCode, Phone)
 
+![](esp-1-customer-view.png)
+
+![](esp-1-customer-orders-view.png)
  ----
 
 <style type="text/css">
