@@ -3,6 +3,22 @@
 
 - In the following example take note of the inclusion of: Composite Primary Keys, Alter Table statements, Dropping and adding constraints, Updating tables, and the creation of indexes
 
+- Inserting data goes by the following format:
+	INSERT INTO TableName (ColumnNamList)
+		VALUES (ValueList)
+- Note Your value list must match your column name list
+
+- Updating data goes by the following format:
+	UPDATE TableName 
+		SET ColumnName = ValueList
+		WHERE WhereCondition
+
+- Deleting date goes by the following format:
+	DELETE FROM TableName
+		WHERE WhereCondition
+
+- All Of these are DML(Data Manipulation Language)
+
 /* **********************************************
  * Simple Table Creation - Columns and Primary Keys
  *
@@ -27,7 +43,7 @@ GO  -- this statement helps to "separate" various DDL statements in our script
 /* DROP TABLE statements (to "clean up" the database for re-creation)  */
 IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'OrderDetails')
     DROP TABLE OrderDetails
-IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'IventoryItems')
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'InventoryItems')
     DROP TABLE InventoryItems
 IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Orders')
     DROP TABLE Orders
@@ -150,6 +166,31 @@ CREATE TABLE OrderDetails
 		PRIMARY KEY (OrderNumber, ItemNumber) -- specify all the columns in the PK
 )
 
+-- Let's insert a few rows of data for the tables
+PRINT 'Inserting customer data'
+INSERT INTO Customers(FirstName, LastName, [Address], City, PostalCode)
+	VALUES ('Clark', 'Kent', '344 Clinton Street', 'Metropolis', 'S0S0N0')
+INSERT INTO Customers(FirstName, LastName, [Address], City, PostalCode)
+	VALUES ('Jimmy', 'Olsen', '242 River Close', 'Bakerline', 'B4K3R1')
+PRINT '--end of customer data--'
+PRINT ''
+
+PRINT 'Inserting inventory items'
+INSERT INTO InventoryItems(ItemNumber, ItemDescription, CurrentSalePrice, InStockCount, ReorderLevel)
+	VALUES ('H8726', 'Cleaning Fan Belt', 29.95, 3, 5)
+INSERT INTO InventoryItems(ItemNumber, ItemDescription, CurrentSalePrice, InStockCount, ReorderLevel)
+	VALUES ('H8621', 'Engine Fan Belt', 17.45, 10, 5)
+PRINT '--End of Inventory data--'
+PRINT '' 
+
+PRINT 'Inserting an order'
+INSERT INTO Orders(CustomerNumber, [Date], Subtotal, GST)
+	VALUES (100, GETDATE(), 17.45, 0.87)
+INSERT INTO OrderDetails(OrderNumber, ItemNumber, Quantity, SellingPrice)
+	VALUES (200, 'H8726', 1, 17.45)
+GO
+
+
 /* *********************************
  * Change Requests for Spec 1
  * Perform table changes through ALTER statements.
@@ -189,6 +230,23 @@ ALTER TABLE Customers
 	ADD CONSTRAINT CK_Customers_FirstName
 		CHECK (FirstName LIKE '[A-Z][A-Z]%')
 
+-- By the time that the ALTER TABLE changes are made for A) and B), 
+-- we can insert Customer information allowing certain columns to be NULL.
+INSERT INTO Customers(FirstName, LastName)
+	VALUES ('Fred', 'Flintstones')
+INSERT INTO Customers(FirstName, LastName)
+	VALUES ('Barney', 'Rubble')
+INSERT INTO Customers(FirstName, LastName, PhoneNumber)
+	VALUES ('Wilma', 'Slaghoople', '(403)555-1212')
+INSERT INTO Customers(FirstName, LastName, [Address], City)
+	VALUES ('Betty', 'Mcbricker', '103 Granite Road', 'Bedrock')
+
+-- Select the customer information
+SELECT	CustomerNumber, FirstName, LastName,
+		[Address] + ' ' + City + ' ' + Province AS 'Customer Address', 
+		PhoneNumber
+FROM	Customers
+
 -- C) add a default constraint on the Orders.Date column to use the current cate.
 -- GETDATE() is a global function in the SQL Server Database
 -- GETDATE() will obtain the current date/time on the database server
@@ -201,6 +259,25 @@ ALTER TABLE Orders
 --		use		\ this /  for \this column/ if no value was supplied when INSERTING data 
 GO
 
+--To illustrate the default value, consider this sample row for the Orders table
+INSERT INTO Orders(CustomerNumber, Subtotal, GST)
+	VALUES (101, 150.00, 7,50)
+-- Select the current Orders
+SELECT OrderNumber, CustomerNumber, Total, [date]
+FROM Orders
+GO
+
+-- Prep-data for change request D)....
+-- Some inventory data without a ItemDescription
+INSERT INTO InventoryItems(ItemNumber, ItemDescription, CurrentSalePrice, InStockCount, ReorderLevel)
+	VALUES ('GR35A', NULL, 45.95, 8, 5)
+INSERT INTO InventoryItems(ItemNumber, CurrentSalePrice, InStockCount, ReorderLevel)
+	VALUES ('KD5-Q', 1.45, 10, 7)
+GO
+SELECT ItemNumber, ItemDescription, CurrentSalePrice
+FROM InventoryItems
+GO
+
 -- D) Change the InventoryItems.ItemDescription column to be NOT NULL
 --		WAIT!!	We have described the ItemDescription as allowing NULL values.
 --				That means we might have dta in the table where the ItemDescription doesn't exist.
@@ -210,10 +287,32 @@ GO
 UPDATE		InventoryItems
 	SET		ItemDescription = '-missing-'
 	WHERE	ItemDescription IS NULL
+
+-- Also Note:	We might be asked to put a default value for the column 
+--				that will become required. In this case, let's use a default 
+--				value of '-no description-'
+ALTER TABLE InventoryItems
+	ADD CONSTRAINT DF_InventoryItems_Description
+		DEFAULT '-no description-' FOR ItemDescription
 GO
+-- Here's some sample data where ItemDescription is not entered and the default value comes into play
+INSERT INTO InventoryItems(ItemNumber, CurrentSalePrice, InStockCount, ReorderLevel)
+	VALUES	('B-95R', 45.95, 8, 5),
+			('GR47D', 92.45, 3, 3)
+GO
+
 -- Now we can change the ItemDescription to be required (NOT NULL)
 ALTER TABLE InventoryItems
 	ALTER COLUMN ItemDescription varchar(50) NOT NULL
+GO
+
+-- Let's enter a bit more information in our database
+INSERT INTO InventoryItems(ItemNumber, ItemDescription, CurrentSalePrice, InStockCount, ReorderLevel)
+	VALUES ('BL-92', '92mm Bolt', 3.95, 18, 6)
+
+-- Let's see the data in the inventory table
+SELECT ItemNumber, ItemDescription, CurrentSalePrice
+FROM InventoryItems
 GO
 
 -- E) Add indexes to the customer's First and Last Name columns as well to the Item's Description column.
@@ -226,17 +325,37 @@ CREATE NONCLUSTERED INDEX IX_InventoryItems_ItemDescription
 	ON InventoryItems (ItemDescription)
 GO -- End of a batch of instructions
 
--- TODO: we will move the INSERT statements to another part of the script
+-- F) Data change requests: All inventory items that are less the $5.00 have to have their prices increased by 10%.
 
-GO -- End of a batch of instructions
+UPDATE InventoryItems
+	SET CurrentSalePrice = CurrentSalePrice * 0.10
+	WHERE CurrentSalePrice < 5.00
 
--- Let's insert a few rows of data for the tables
-PRINT 'Inserting customer data'
-INSERT INTO Customers(FirstName, LastName, [Address], City, PostalCode)
-	VALUES ('Clark', 'Kent', '344 Clinton Street', 'Metropolis', 'S0S0N0')
-INSERT INTO Customers(FirstName, LastName, [Address], City, PostalCode)
-	VALUES ('Jimmy', 'Olsen', '242 River Close', 'Bakerline', 'B4K3R1')
+-- Somebody got married....
+UPDATE Customers
+	SET LastName = 'Flintstone'
+	WHERE FirstName = 'Wilma' AND LastName = 'Slaghoople'
 
-PRINT 'Inserting an order'
-INSERT INTO Orders(CustomerNumber, [Date], Subtotal, GST)
-	VALUES (100, GETDATE(), 17.45, 0.87)
+UPDATE Customers 
+	SET LastName = 'Rubble'
+	WHERE FirstName = 'Betty' AND LastName = 'Mcbricker'
+
+UPDATE Customers
+	SET [Address] = '103 Granite Road',
+		City = 'Bedrock'
+	WHERE LastName = 'Rubble'
+
+UPDATE Customers
+	SET [Address] = '105 Granite Road',
+	City = 'Bedrock'
+	WHERE LastName = 'Flintstone'
+
+-- Increase the current sale price for products between $10 and $30 by 2%.
+UPDATE InventoryItems 
+	SET CurrentSalePrice = CurrentSalePrice * 0.02
+	WHERE CurrentSalePrice BETWEEN 10 AND 30
+
+-- And, we want to get rid of some inventory
+DELETE FROM InventoryItems
+WHERE ItemNumber IN ('GR47D', 'KD5-Q')
+GO
