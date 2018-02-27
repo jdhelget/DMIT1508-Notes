@@ -2,6 +2,9 @@
 	- SELECT: A comma-seperated list of columns and/or expressions
 	- FROM: A set of one or more (joined) tables
 	- WHERE: Filter the results based on column values
+	- GROUP BY:
+	- HAVING:
+	- ORDER BY:
 
 
 -- SIMPLE SELECT EXERCISE 1
@@ -93,3 +96,95 @@ WHERE	R.Mark BETWEEN 70 and 80
 SELECT	StudentID, CourseID, Mark
 FROM	Registration
 WHERE	Mark = '80' OR Mark = '85'
+
+-- The next two questions introduce the idea of "wildcards" and pattern matching in the WHERE clause
+-- _ is a wildcard for a single character
+-- % is a wildcard for zero or more characters
+-- [] is a pattern for a single character matching the pattern in the square brackets
+
+-- 9. Select the students first name and last names who have last names starting with S
+SELECT	FirstName, LastName
+FROM Student
+WHERE LastName LIKE 'S%'
+
+-- 10. Select courseNames whose CourseId have a 1 as the fifth character
+SELECT	CourseName
+FROM	Course
+WHERE	CourseID LIKE '____1%'
+
+-- 11. Select the CourseID's and course names where the course name contains the word 'programming'
+SELECT	CourseId, CourseName
+FROM	Course
+WHERE	CourseName LIKE '%programming%'
+
+-- 12. Select all the club names who start with N or C
+SELECT	ClubName
+FROM	Club
+WHERE	ClubName LIKE 'N%' OR ClubName LIKE 'C%'
+
+-- 13. Select the student names, street address and city where the lastname only contains 3 letters
+SELECT	FirstName + ' ' + LastName, StreetAddress, City
+FROM	Student
+WHERE	LastName LIKE '___'
+
+-- 14. Select all the studentID's where the payement amount < 500 OR the PaymenttypeID is 5
+SELECT	StudentId
+FROM	Payment
+WHERE	Amount < 500 OR PaymentId LIKE '5'
+
+--Simple Select Exercise 2
+-- This set of exercises demonstrates performing simple Aggregate functions
+-- to get results such as SUM(), AVG(), COUNT() 
+-- All aggregates are done using built-in functions in the database
+
+
+--1.	Select the average Mark from all the Marks in the registration table
+SELECT	AVG(Mark) AS 'Average Mark'
+FROM	Registration
+
+--1.a.  Show the average mark, the total of all marks, and a count of all marks.
+SELECT	AVG(Mark) AS 'Average Mark', 
+		SUM(Mark) AS 'Total of all Marks', 
+		COUNT(Mark) AS 'How many Marks'
+FROM Registration
+
+--2.	Select the average Mark of all the students who are taking DMIT104
+SELECT	AVG(Mark) AS 'Average Mark'
+FROM	Registration
+WHERE	CourseID LIKE 'DMIT104'
+
+--3.	Select how many students are there in the Student Table
+SELECT	COUNT(StudentId) AS 'Student Count'
+FROM	Student
+
+--4.	Select how many students are taking (have a grade for) DMIT152
+SELECT	COUNT(Mark) AS 'Student Count for DMIT 152'
+FROM	Registration
+WHERE	CourseId = 'DMIT152'
+
+--5.	Select the average payment amount for payment type 5
+SELECT	AVG(Amount)
+FROM	Payment
+WHERE	PaymentTypeID LIKE '5'
+
+-- Given that there are some other aggregate methods like MAX(columnName) and MIN(columnName), complete the following two questions:
+--6. Select the highest payment amount
+SELECT	MAX(Amount) AS 'Highest Payment'
+FROM	Payment
+
+--7.	 Select the lowest payment amount
+SELECT	MIN(Amount) AS 'Lowest Payment'
+FROM	Payment
+
+--8. Select the total of all the payments that have been made
+SELECT	SUM(Amount) AS 'Total of Payments'
+FROM	Payment
+
+--9. How many different payment types does the school accept?
+SELECT	COUNT(PaymentTypeID) AS 'Number of Payment Types'
+FROM	Payment
+
+--10. How many students are in club 'CSS'?
+SELECT	COUNT(StudentID) AS 'Student Count for Club CSS'
+FROM	Activity
+WHERE	ClubId = 'CSS'
