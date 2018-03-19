@@ -219,3 +219,89 @@ RETURN
 GO
 
 EXEC StudentPaymentTypes
+
+-- Add a Club
+
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'AddClub')
+    DROP PROCEDURE AddClub
+GO
+CREATE PROCEDURE AddClub
+	-- Columns must start with a @
+    @ClubId		varchar(10),
+	@ClubName	varchar(50)
+AS
+    -- Body of procedure here
+	INSERT INTO	Club(ClubID, ClubName)
+	VALUES	(@ClubID, @ClubName)
+RETURN
+
+-- Execute Procedure
+EXEC	AddClub 'SQL1', 'SQL Dance Club'
+GO
+
+-- Get the SP source code from the db
+sp_helptext AddClub
+GO
+
+-- Check for parameter values not being passed
+ALTER PROCEDURE AddClub
+--	Default ther parameters to NULL so they always have a value, even if not passed one
+    @ClubId		varchar(10)=NULL,
+	@ClubName	varchar(50)=NULL
+AS
+	IF @ClubId IS NULL OR @ClubName IS NULL
+		BEGIN
+		RAISERROR('ClubID and ClubName are required',16,1)
+		END
+	ELSE
+		BEGIN
+		INSERT INTO	Club(ClubID, ClubName)
+		VALUES	(@ClubID, @ClubName)
+	END
+RETURN
+
+-- Return the ERROR message
+EXEC	AddClub
+
+-- Create a Proc that will change the mailing address for a student. Call it ChangeMailingAddress.
+-- Make sure all the parameter values are supplied before running the update (not null)
+
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'ChangeMailingAddress')
+    DROP PROCEDURE ChangeMailingAddress
+GO
+CREATE PROCEDURE ChangeMailingAddress
+	@StudentID		int=NULL,
+	@StreetAddress	varchar(35)=NULL,
+	@City			varchar(30)=NULL,
+	@Province		char(2)=NULL,
+	@PostalCode		char(6)=NULL
+AS
+    IF @StudentID IS NULL OR @StreetAddress IS NULL OR @City IS NULL OR @Province IS NULL OR @PostalCode IS NULL
+		BEGIN
+		RAISERROR ('StreetAddress, City, Province, and PostalCode are all required', 16, 1)
+		END
+	ELSE
+		BEGIN
+		UPDATE	Student
+		SET		StreetAddress = @StreetAddress,
+				City = @City,
+				Province = @Province, 
+				PostalCode = @PostalCode
+		WHERE	StudentID = @StudentId
+	END
+RETURN
+
+
+-- 3. Create a stored procedure that will remove a student from a club. Call it RemoveFromClub.
+
+-- Query-based Stored Procedures
+-- 4. Create a stored procedure that will display all the staff and their position in the school.
+--    Show the full name of the staff member and the description of their position.
+
+-- 5. Display all the final course marks for a given student. Include the name and number of the course
+--    along with the student's mark.
+
+-- 6. Display the students that are enrolled in a given course on a given semester.
+--    Display the course name and the student's full name and mark.
+
+-- 7. The school is running out of money! Find out who still owes money for the courses they are enrolled in.
