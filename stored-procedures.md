@@ -293,15 +293,117 @@ RETURN
 
 
 -- 3. Create a stored procedure that will remove a student from a club. Call it RemoveFromClub.
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'RemoveFromClub')
+    DROP PROCEDURE RemoveFromClub
+GO
+CREATE PROCEDURE RemoveFromClub
+	@StudentID	int=NULL,
+    @ClubId		varchar(10)=NULL
+AS
+	IF @StudentId IS NULL OR @ClubID IS NULL
+		BEGIN
+		RAISERROR('StudentID and ClubID are required',16,1)
+		END
+	ELSE
+		DELETE FROM Activity
+		WHERE	StudentID = @StudentID AND ClubID = @ClubID
+RETURN
+
+EXECUTE	RemoveFromClub 199899200, 'CSS'
+
+SELECT	StudentID
+FROM	Activity
+WHERE	ClubId = 'CSS'
 
 -- Query-based Stored Procedures
 -- 4. Create a stored procedure that will display all the staff and their position in the school.
 --    Show the full name of the staff member and the description of their position.
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'DisplayStaff')
+    DROP PROCEDURE DisplayStaff
+GO
+CREATE PROCEDURE DisplayStaff
+AS
+	SELECT	FirstName + ' ' + LastName AS 'FullName',
+			P.PositionDescription
+	FROM	Staff S
+		INNER JOIN Position P
+			ON P.PositionId = S.PositionID
+RETURN
+
+EXECUTE	DisplayStaff
 
 -- 5. Display all the final course marks for a given student. Include the name and number of the course
 --    along with the student's mark.
 
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'DisplayStudentFinalMark')
+    DROP PROCEDURE DisplayStudentFinalMark
+GO
+CREATE PROCEDURE DisplayStudentFinalMark
+	@StudentId	int=Null
+AS
+	IF @StudentId is NULL
+		BEGIN
+		RAISERROR ('StudentId is Required',16,1)
+		END
+	ELSE
+	SELECT	FirstName + ' ' + LastName AS 'FullName',
+			C.CourseName,
+			R.Mark
+	FROM	Student S
+		INNER JOIN Registration R
+			ON R.StudentID = S.StudentID
+		INNER JOIN Course C
+			ON C.CourseId = R.CourseID
+	WHERE S.StudentID = @StudentId
+RETURN
+
+EXECUTE DisplayStudentFinalMark 199899200
+
 -- 6. Display the students that are enrolled in a given course on a given semester.
 --    Display the course name and the student's full name and mark.
 
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'Attendance')
+    DROP PROCEDURE Attendance
+GO
+CREATE PROCEDURE Attendance
+	@CourseId	char(7)=NULL,
+	@Semester	char(5)=NULL
+AS
+	IF @CourseId is NULL OR @Semester IS NULL
+		BEGIN
+		RAISERROR ('CourseID and Semester is Required',16,1)
+		END
+	ELSE
+	SELECT	C.CourseName,
+			FirstName + ' ' + LastName AS 'FullName',
+			R.Mark
+	FROM	Student S
+		INNER JOIN Registration R
+			ON R.StudentID = S.StudentID
+		INNER JOIN Course C
+			ON C.CourseId = R.CourseID
+	WHERE C.CourseID = @CourseID AND R.Semester = @Semester
+RETURN
+
+EXECUTE Attendance 'DMIT103', '2000S'
+
 -- 7. The school is running out of money! Find out who still owes money for the courses they are enrolled in.
+
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = N'PROCEDURE' AND ROUTINE_NAME = 'GiveMeMoney')
+    DROP PROCEDURE GiveMeMoney
+GO
+CREATE PROCEDURE GiveMeMoney
+AS
+	SELECT	S.StudentID,
+			FirstName + ' ' + LastName AS 'FullName',
+			C.CourseName,
+			S.BalanceOwing
+	FROM	Student S
+		INNER JOIN Registration R
+			ON R.StudentID = S.StudentID
+		INNER JOIN Course C
+			ON C.CourseId = R.CourseID
+	WHERE	S.BalanceOwing > 0
+RETURN
+
+EXECUTE	GiveMeMoney
