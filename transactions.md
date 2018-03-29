@@ -157,7 +157,7 @@ AS
 	    DECLARE @CourseCost     money
         -- Assign a value to each of the local variables
 	    SELECT @MaxStudents = MaxStudents FROM Course WHERE CourseId = @CourseID
-	    SELECT @CurrentCount = COUNT (*) FROM Registration WHERE CourseId = @CourseID AND Semester = @Semester
+	    SELECT @CurrentCount = COUNT (StudentID) FROM Registration WHERE CourseId = @CourseID AND Semester = @Semester
 	    SELECT @CourseCost = coursecost FROM Course WHERE CourseId = @CourseID
 
 	    IF @MaxStudents = @currentcount 
