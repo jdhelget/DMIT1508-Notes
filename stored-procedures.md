@@ -1,3 +1,9 @@
+--stored procedure test - 4 questions - can bring 1 cheat sheet
+--insert procedures
+--selecting procedures
+--altering procedures
+--transaction
+
 --Stored Procedures (Sprocs)
 
 USE [A01-School]
